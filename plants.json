@@ -1,0 +1,39 @@
+[
+  {
+    "plant": "Kale",
+    "soil": ["clay", "loamy"],
+    "sun": "partial",
+    "companions": ["Garlic", "Beetroot"],
+    "avoid": ["Strawberry"],
+    "sensors": ["Soil Moisture Sensor", "Soil Temperature Sensor"],
+    "notes": "Kale tolerates clay soil and grows well in cool, partial sun conditions."
+  },
+  {
+    "plant": "Chard",
+    "soil": ["clay", "loamy"],
+    "sun": "partial",
+    "companions": ["Onion", "Cabbage"],
+    "avoid": ["Pole Beans"],
+    "sensors": ["pH Sensor", "Light Sensor"],
+    "notes": "Chard is hardy and grows well in heavy soils with moderate sunlight."
+  },
+  {
+    "plant": "Carrot",
+    "soil": ["loamy", "sandy", "clay"],
+    "sun": "partial",
+    "companions": ["Onion", "Chives"],
+    "avoid": ["Dill"],
+    "sensors": ["Soil pH Sensor"],
+    "notes": "Clay must be loose for carrots; otherwise, root growth is restricted."
+  },
+{
+  "plant": "Rice",
+  "soil": ["clay"],
+  "sun": "full",
+  "companions": ["Azolla"],
+  "avoid": ["Tomato"],
+  "sensors": ["Water Level Sensor", "Soil Moisture Sensor"],
+  "notes": "Rice prefers wet clay soils and is often grown with aquatic companions."
+}
+
+]
