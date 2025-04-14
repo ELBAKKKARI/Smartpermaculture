@@ -2,8 +2,9 @@ import streamlit as st
 import pandas as pd
 import json
 from sklearn.ensemble import RandomForestClassifier
+import lime.lime_tabular
 
-# 🌍 Streamlit page config
+# 🌍 Page config
 st.set_page_config(page_title="Smart Permaculture Assistant", layout="centered")
 
 # 🌿 Header
@@ -21,26 +22,43 @@ def load_model():
     y = df["Crop"]
     model = RandomForestClassifier(n_estimators=100, random_state=42)
     model.fit(X, y)
-    return model, X.columns.tolist()
+    return model, X, y, X.columns.tolist()
 
-model, features = load_model()
+model, X_train, y_train, features = load_model()
+
+# 🔧 Human-readable LIME translation
+
+def human_readable_explanation(lime_list):
+    explanations = []
+    for feature, weight in lime_list:
+        text = ""
+        if "≤" in feature or ">" in feature:
+            text = feature.replace("≤", "moins ou égal à").replace(">", "supérieur à")
+        elif "<" in feature and "≤" not in feature:
+            text = feature.replace("<", "inférieur à")
+        else:
+            text = feature
+        sentiment = "positivement" if weight > 0 else "négativement"
+        explanations.append(f"🔎 {text} a influencé {sentiment} la décision.")
+    return explanations
+
 # 🌿 Load companion data
 with open("plants.json") as f:
     plant_data = json.load(f)
 
-# 👨‍🌾 Choose data input mode
+# 👨‍🌾 Choose input mode
 mode = st.radio("📥 How would you like to provide data?", ["Manual Input", "Use IoT Sensors (CPS Mode)"])
 
 st.markdown("---")
 
-# ✏️ MANUAL INPUT
+# ✏️ Manual Input
 if mode == "Manual Input":
-    st.subheader("📝 Enter Your Soil and Climate Values")
+    st.subheader("🖍️ Enter Your Soil and Climate Values")
     col1, col2 = st.columns(2)
     with col1:
-        N = st.slider("🧪 Nitrogen (N)", 0, 140, 90)
-        P = st.slider("🧪 Phosphorus (P)", 0, 145, 42)
-        K = st.slider("🧪 Potassium (K)", 0, 205, 43)
+        N = st.slider("🤮 Nitrogen (N)", 0, 140, 90)
+        P = st.slider("🤮 Phosphorus (P)", 0, 145, 42)
+        K = st.slider("🤮 Potassium (K)", 0, 205, 43)
     with col2:
         temperature = st.slider("🌡️ Temperature (°C)", 10, 45, 25)
         humidity = st.slider("💧 Humidity (%)", 10, 100, 80)
@@ -56,6 +74,21 @@ if mode == "Manual Input":
         predicted_crop = model.predict(input_data)[0]
         st.success(f"✅ Recommended Crop: **{predicted_crop}**")
 
+        # 🧐 LIME Explanation
+        explainer = lime.lime_tabular.LimeTabularExplainer(
+            training_data=X_train.values,
+            feature_names=features,
+            class_names=model.classes_,
+            mode='classification'
+        )
+        explanation = explainer.explain_instance(input_data.values[0], model.predict_proba)
+
+        st.markdown("### 🧠 Pourquoi ce crop a été recommandé ? (version lisible)")
+        readable = human_readable_explanation(explanation.as_list())
+        for line in readable:
+            st.write(line)
+
+        # 🌿 Companion info
         for plant in plant_data:
             if plant["plant"].lower() == predicted_crop.lower():
                 st.markdown("##### 🌿 Companion Plants:")
@@ -69,16 +102,14 @@ if mode == "Manual Input":
         else:
             st.warning("ℹ️ No companion data found in knowledge base.")
 
-# 🚁 CPS SENSOR MODE
+# 🚁 CPS Mode
 elif mode == "Use IoT Sensors (CPS Mode)":
-    st.subheader("📡 Using Simulated IoT Sensor Values")
-
+    st.subheader("📱 Using Simulated IoT Sensor Values")
     sensor_data = {
         "N": 85, "P": 40, "K": 60,
         "temperature": 24, "humidity": 75,
         "ph": 6.3, "rainfall": 90
     }
-
     st.json(sensor_data)
 
     if st.button("🔍 Recommend Based on Sensors"):
